@@ -58,7 +58,7 @@ int main()
         THROW_IF_FAILED(d3d11Device->CreateBuffer(&bufferDesc, &initData, &dx11Buffer));
     }
 
-    // Crate DX12 buffer
+    // Create DX12 buffers
     {
         D3D12_RESOURCE_DESC bufferDesc = {};
         bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
