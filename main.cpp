@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include <d3d11.h>
+
 using Microsoft::WRL::ComPtr;
 
 int main()
@@ -19,7 +21,7 @@ int main()
 
     ComPtr<ID3D11Buffer> dx11Buffer;
     ComPtr<ID3D12Resource> dx12BufferUAV;
-    ComPtr<ID3D12Resource> dx12BufferReadback; // used to print the data
+    ComPtr<ID3D12Resource> dx12BufferStaging; // Used to print the data
 
     const int numElements = 32;
 
@@ -58,7 +60,7 @@ int main()
         THROW_IF_FAILED(d3d11Device->CreateBuffer(&bufferDesc, &initData, &dx11Buffer));
     }
 
-    // Crate DX12 buffer
+    // Create DX12 buffers
     {
         D3D12_RESOURCE_DESC bufferDesc = {};
         bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
@@ -91,7 +93,7 @@ int main()
             &bufferDesc,
             D3D12_RESOURCE_STATE_COPY_DEST,
             nullptr,
-            IID_PPV_ARGS(&dx12BufferReadback)));
+            IID_PPV_ARGS(&dx12BufferStaging)));
     }
 
     // Get the DirectX 11 resource interface
@@ -108,7 +110,7 @@ int main()
 
     commandList->CopyResource(dx12BufferUAV.Get(), pSharedDX12Buffer);
     commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(dx12BufferUAV.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE));
-    commandList->CopyResource(dx12BufferReadback.Get(), dx12BufferUAV.Get());
+    commandList->CopyResource(dx12BufferStaging.Get(), dx12BufferUAV.Get());
 
     commandList->Close();
 
@@ -123,11 +125,11 @@ int main()
     THROW_IF_FAILED(commandList->Reset(commandAllocator.Get(), nullptr));
 
     float* pData = nullptr;
-    dx12BufferReadback->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+    dx12BufferStaging->Map(0, nullptr, reinterpret_cast<void**>(&pData));
     for (int i = 0; i < numElements; ++i) {
         printf("pData[%d]=%f\n", i, pData[i]);
     }
-    dx12BufferReadback->Unmap(0, nullptr);
+    dx12BufferStaging->Unmap(0, nullptr);
 
     delete[] pInitData;
     CloseHandle(eventHandle);
