@@ -3,6 +3,7 @@
 #define NOMINMAX
 
 #include <wil/resource.h>
+#include <wrl.h>
 
 #include <chrono>
 #include <iostream>
